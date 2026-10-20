@@ -1,0 +1,19 @@
+// 可提交的默认配置。个人/CI 覆盖写到 Local.xcconfig(已 .gitignore)或用环境变量/命令行传入。
+// 注意:xcconfig 里 "//" 是注释,URL 中的双斜杠需写成 /$()/。
+
+// 服务器地址:IP 或主机名[:端口],可带 http:// 或 https://(缺省 http)。
+FUNGAME_SERVER_ADDRESS = https:/$()/fungame.farfarfun.com
+
+PRODUCT_BUNDLE_IDENTIFIER = com.example.fungame
+MARKETING_VERSION = 0.1.0
+CURRENT_PROJECT_VERSION = 1
+
+// 签名:默认不签名,保证无证书也能出模拟器包/未签名归档。
+// 真机/正式包在 Local.xcconfig 中设置 CODE_SIGNING_ALLOWED=YES、DEVELOPMENT_TEAM、CODE_SIGN_IDENTITY、PROVISIONING_PROFILE_SPECIFIER。
+DEVELOPMENT_TEAM =
+CODE_SIGN_IDENTITY =
+PROVISIONING_PROFILE_SPECIFIER =
+CODE_SIGNING_ALLOWED = NO
+CODE_SIGNING_REQUIRED = NO
+
+#include? "Local.xcconfig"

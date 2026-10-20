@@ -1,0 +1,155 @@
+# 打 v* tag 触发。附件命名遵循 farfarfun/packages 的约定:
+#   fungame-client_<版本>_<amd64|arm64>.deb
+#   FunGame-<版本>-macos-<arm64|amd64>.dmg
+#   fungame-client-<版本>-android.apk
+#   SHA256SUMS(最后一步生成,覆盖全部附件)
+name: release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  deb:
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            arch: amd64
+          - runner: ubuntu-24.04-arm
+            arch: arm64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - id: v
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+      - working-directory: desktop
+        run: |
+          npm ci
+          npm test
+          npx electron-builder --config electron-builder.config.cjs --linux deb \
+            -c.extraMetadata.version=${{ steps.v.outputs.version }} --publish never
+      - run: |
+          mkdir -p out
+          f=$(ls desktop/release/*.deb desktop/dist/*.deb 2>/dev/null | head -1)
+          test -n "$f"
+          cp "$f" "out/fungame-client_${{ steps.v.outputs.version }}_${{ matrix.arch }}.deb"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deb-${{ matrix.arch }}
+          path: out/*
+
+  dmg:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - id: v
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+      - working-directory: desktop
+        # 没有 CSC_LINK / CSC_NAME 时自动跳过签名,macOS 做 ad-hoc 签名
+        env:
+          CSC_LINK: ${{ secrets.MACOS_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.MACOS_CSC_KEY_PASSWORD }}
+        run: |
+          npm ci
+          npm test
+          npx electron-builder --config electron-builder.config.cjs --mac dmg --arm64 --x64 \
+            -c.extraMetadata.version=${{ steps.v.outputs.version }} \
+            -c.dmg.artifactName='FunGame-${version}-macos-${arch}.${ext}' --publish never
+      - run: |
+          mkdir -p out
+          d=$(dirname "$(ls desktop/release/*.dmg desktop/dist/*.dmg 2>/dev/null | head -1)")
+          cp "$d"/FunGame-*-macos-arm64.dmg out/
+          cp "$d"/FunGame-*-macos-x64.dmg "out/FunGame-${{ steps.v.outputs.version }}-macos-amd64.dmg"
+          ls -l out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dmg
+          path: out/*
+
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+      - id: v
+        run: |
+          ver="${GITHUB_REF_NAME#v}"
+          IFS=. read -r a b c <<< "${ver%%-*}"
+          echo "version=$ver" >> "$GITHUB_OUTPUT"
+          echo "code=$((a*10000 + b*100 + c))" >> "$GITHUB_OUTPUT"
+      - name: 还原 release keystore(未配置 Secrets 时回落到 debug 签名)
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KS_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KS_KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -n "$KS_B64" ]; then
+            echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+            {
+              echo "FUNGAME_KEYSTORE_FILE=$RUNNER_TEMP/release.jks"
+              echo "FUNGAME_KEYSTORE_PASSWORD=$KS_PASS"
+              echo "FUNGAME_KEY_ALIAS=$KS_ALIAS"
+              echo "FUNGAME_KEY_PASSWORD=${KS_KEY_PASS:-$KS_PASS}"
+            } >> "$GITHUB_ENV"
+          fi
+      - working-directory: android
+        run: >
+          ./gradlew test assembleRelease
+          -PappVersion=${{ steps.v.outputs.version }} -PappVersionCode=${{ steps.v.outputs.code }}
+      - run: |
+          mkdir -p out
+          f=$(ls android/app/build/outputs/apk/release/*.apk | head -1)
+          cp "$f" "out/fungame-client-${{ steps.v.outputs.version }}-android.apk"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk
+          path: out/*
+
+  ios-check:
+    # iOS 不进 packages 源(无签名材料时只能出模拟器包),发版时只做编译与单测门禁
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - working-directory: ios
+        run: |
+          swift test
+          brew install xcodegen
+          xcodegen generate
+          xcodebuild -project FungameShell.xcodeproj -scheme FungameShell \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' build
+
+  release:
+    needs: [deb, dmg, apk, ios-check]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: assets
+          merge-multiple: true
+      - name: SHA256SUMS(必须最后一步,覆盖全部附件)
+        working-directory: assets
+        run: |
+          ls -l
+          sha256sum * > SHA256SUMS
+          cat SHA256SUMS
+      - name: 创建正式 Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >
+          gh release create "$GITHUB_REF_NAME" assets/* -R "$GITHUB_REPOSITORY"
+          --title "$GITHUB_REF_NAME" --generate-notes

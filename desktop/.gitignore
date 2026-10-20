@@ -1,0 +1,11 @@
+node_modules/
+out/
+release/
+dist/
+*.p12
+*.pem
+*.key
+*.cer
+*.p8
+*.provisionprofile
+.env*

@@ -1,0 +1,11 @@
+# Miscellaneous
+*.log
+.DS_Store
+.history
+
+# Editors
+*.iml
+.idea/
+
+# Node
+node_modules/

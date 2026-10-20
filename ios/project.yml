@@ -1,0 +1,25 @@
+name: FungameShell
+options:
+  bundleIdPrefix: com.example
+  deploymentTarget:
+    iOS: "15.0"
+packages:
+  FungameShell:
+    path: .
+targets:
+  FungameShell:
+    type: application
+    platform: iOS
+    sources: [App]
+    configFiles:
+      Debug: Config.xcconfig
+      Release: Config.xcconfig
+    dependencies:
+      - package: FungameShell
+        product: FungameShellCore
+    settings:
+      base:
+        INFOPLIST_FILE: App/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SWIFT_VERSION: "5.9"

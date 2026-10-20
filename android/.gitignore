@@ -1,0 +1,13 @@
+build/
+.gradle/
+local.properties
+*.keystore
+*.jks
+.idea/
+*.iml
+.kotlin/
+captures/
+.cxx/
+# 由 genNetworkSecurityConfig 生成
+app/src/main/res/xml/network_security_config.xml
+keystore.properties
