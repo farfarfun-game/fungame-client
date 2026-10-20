@@ -1,4 +1,4 @@
-# fungame-client / desktop
+# FunGame / desktop
 
 Electron 桌面壳(macOS / Linux)。壳本身只做一件事:**打开一个可配置的服务地址**。不含前端代码、不依赖 web 包或内部 npm 源,构建不需要任何内部凭据。
 

@@ -1,7 +1,7 @@
 # 打 v* tag 触发。附件命名遵循 farfarfun/packages 的约定:
-#   fungame-client_<版本>_<amd64|arm64>.deb
+#   fungame_<版本>_<amd64|arm64>.deb
 #   FunGame-<版本>-macos-<arm64|amd64>.dmg
-#   fungame-client-<版本>-android.apk
+#   fungame-<版本>-android.apk
 #   SHA256SUMS(最后一步生成,覆盖全部附件)
 name: release
 
@@ -46,7 +46,7 @@ jobs:
           mkdir -p out
           f=$(ls desktop/release/*.deb desktop/dist/*.deb 2>/dev/null | head -1)
           test -n "$f"
-          cp "$f" "out/fungame-client_${{ steps.v.outputs.version }}_${{ matrix.arch }}.deb"
+          cp "$f" "out/fungame_${{ steps.v.outputs.version }}_${{ matrix.arch }}.deb"
       - uses: actions/upload-artifact@v4
         with:
           name: deb-${{ matrix.arch }}
@@ -121,7 +121,7 @@ jobs:
       - run: |
           mkdir -p out
           f=$(ls android/app/build/outputs/apk/release/*.apk | head -1)
-          cp "$f" "out/fungame-client-${{ steps.v.outputs.version }}-android.apk"
+          cp "$f" "out/fungame-${{ steps.v.outputs.version }}-android.apk"
       - uses: actions/upload-artifact@v4
         with:
           name: apk
