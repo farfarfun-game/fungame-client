@@ -1,4 +1,6 @@
-# fungame-client
+<p align="center"><img src="assets/mark-256.png" width="128" alt="FunGame"></p>
+
+# FunGame 客户端(fungame-client)
 
 FunGame 的多端封装壳:把 Web 版本装进 iOS、Android 与桌面(macOS / Linux)应用。
 
