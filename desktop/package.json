@@ -2,13 +2,15 @@
   "name": "fungame-client",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://github.com/farfarfun-game/fungame-client",
+  "author": { "name": "farfarfun", "email": "noreply@farfarfun.com" },
   "description": "FunGame 桌面端封装壳(Electron,macOS/Linux):加载可配置的服务地址",
   "type": "module",
   "main": "src/main.js",
   "engines": { "node": ">=20" },
   "scripts": {
     "start": "electron .",
-    "test": "node --test test/",
+    "test": "node --test test/*.test.js",
     "dist": "electron-builder --config electron-builder.config.cjs"
   },
   "devDependencies": {
