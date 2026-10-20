@@ -41,6 +41,13 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: desktop/package-lock.json
+      - name: arm64 使用系统 fpm(electron-builder 自带的 fpm 只有 x86 版)
+        if: matrix.arch == 'arm64'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ruby ruby-dev build-essential
+          sudo gem install fpm --no-document
+          echo "USE_SYSTEM_FPM=true" >> "$GITHUB_ENV"
       - run: npm ci
       - run: npx electron-builder --config electron-builder.config.cjs --linux deb --publish never
       - run: ls -l dist release 2>/dev/null || true
