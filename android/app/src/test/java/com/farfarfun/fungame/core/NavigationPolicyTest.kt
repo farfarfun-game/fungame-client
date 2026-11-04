@@ -47,4 +47,30 @@ class NavigationPolicyTest {
         assertEquals(NavDecision.BLOCK, p.decide("https://example.com@evil.com/"))
         assertEquals(NavDecision.EXTERNAL, p.decide("https://example.com.evil.com/"))
     }
+
+    @Test fun casdoorLoginAndCallbackStayInWebView() {
+        val p = policy("https://fungame.farfarfun.com")
+        for (url in listOf(
+            "https://id.farfarfun.com/login/oauth/authorize?client_id=fungame&state=test",
+            "https://ID.FARFARFUN.COM:443/login",
+            "https://fungame.farfarfun.com/api/auth/oidc/callback?code=test&state=test",
+            "https://fungame.farfarfun.com/home",
+        )) {
+            assertEquals(url, NavDecision.ALLOW, p.decide(url))
+        }
+    }
+
+    @Test fun casdoorAllowlistRequiresExactHttpsOrigin() {
+        val p = policy("https://fungame.farfarfun.com")
+        for (url in listOf(
+            "http://id.farfarfun.com/login",
+            "https://id.farfarfun.com:8443/login",
+            "https://id.farfarfun.com.evil.test/login",
+            "https://other.farfarfun.com/login",
+        )) {
+            assertEquals(url, NavDecision.EXTERNAL, p.decide(url))
+        }
+        assertEquals(NavDecision.BLOCK, p.decide("https://id.farfarfun.com@evil.test/login"))
+        assertEquals(NavDecision.BLOCK, p.decide("https://evil.test@id.farfarfun.com/login"))
+    }
 }

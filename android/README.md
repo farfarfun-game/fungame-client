@@ -20,7 +20,8 @@
 ## 安全基线
 
 - 关闭 `allowFileAccess` / `allowContentAccess` / `allowFileAccessFromFileURLs` / `allowUniversalAccessFromFileURLs`;混合内容禁止。
-- 导航只允许与配置地址同协议、同主机、同端口;其它 http(s)、`mailto:`、`tel:` 交给系统处理;`file:` / `content:` / `intent:` / `javascript:` 等一律拦截(`NavigationPolicy`)。
+- 服务同源页面和 `https://id.farfarfun.com`（仅默认 443 端口）在同一个 WebView 中打开，Casdoor 登录及返回服务域名的回调不启动系统浏览器，登录 Cookie 保留在 App 中。其它 http(s)、`mailto:`、`tel:` 交给系统处理;`file:` / `content:` / `intent:` / `javascript:` 等一律拦截(`NavigationPolicy`)。
+- 第三方身份提供方仍按外链处理；要求外部浏览器的第三方登录渠道不属于此内嵌 Casdoor 登录流程。
 
 ## 构建与测试
 

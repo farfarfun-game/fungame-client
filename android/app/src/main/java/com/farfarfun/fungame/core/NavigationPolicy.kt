@@ -5,7 +5,7 @@ import java.net.URI
 enum class NavDecision { ALLOW, EXTERNAL, BLOCK }
 
 /**
- * 导航限制:只有与配置地址同协议、同主机、同端口的 URL 留在 WebView 内;
+ * 导航限制:服务同源页面与 Casdoor HTTPS 登录页留在 WebView 内,共用登录 Cookie;
  * 其它 http(s)、mailto、tel 交给系统处理;file:/content:/intent:/javascript: 等一律拦截。
  */
 class NavigationPolicy(private val server: ServerAddress) {
@@ -19,6 +19,7 @@ class NavigationPolicy(private val server: ServerAddress) {
         if (uri.userInfo != null) return NavDecision.BLOCK
         val port = if (uri.port != -1) uri.port else if (scheme == "https") 443 else 80
         val same = scheme == server.scheme && host == server.host && port == server.effectivePort
-        return if (same) NavDecision.ALLOW else NavDecision.EXTERNAL
+        val casdoor = scheme == "https" && host == "id.farfarfun.com" && port == 443
+        return if (same || casdoor) NavDecision.ALLOW else NavDecision.EXTERNAL
     }
 }

@@ -98,13 +98,14 @@ jobs:
           IFS=. read -r a b c <<< "${ver%%-*}"
           echo "version=$ver" >> "$GITHUB_OUTPUT"
           echo "code=$((a*10000 + b*100 + c))" >> "$GITHUB_OUTPUT"
-      - name: 还原 release keystore(未配置 Secrets 时回落到 debug 签名)
+      - name: 还原固定 release keystore
         env:
           KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KS_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           KS_KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
+          test -n "$KS_B64" || { echo "ANDROID_KEYSTORE_BASE64 is required for release" >&2; exit 1; }
           if [ -n "$KS_B64" ]; then
             echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
             {
